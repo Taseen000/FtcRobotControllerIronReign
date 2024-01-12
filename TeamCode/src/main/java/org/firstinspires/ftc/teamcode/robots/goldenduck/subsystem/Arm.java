@@ -50,8 +50,6 @@ public class Arm implements Subsystem {
     public static int GripInnerClosed = 900;
     public static int GripOuterOpen = 900;
     public static int GripOuterClosed = 1400;
-
-
     int shoulderSpeed = 20;
 
     public static boolean TEMP_WRIST_TUNE = false;
