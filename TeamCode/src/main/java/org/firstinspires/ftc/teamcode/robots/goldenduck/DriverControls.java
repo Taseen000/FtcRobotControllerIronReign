@@ -1,5 +1,14 @@
 package org.firstinspires.ftc.teamcode.robots.goldenduck;
 
+import android.annotation.SuppressLint;
+
+import com.qualcomm.robotcore.hardware.Gamepad;
+
+import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
+import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
+
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.active;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.alliance;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.debugTelemetryEnabled;
@@ -7,17 +16,6 @@ import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.robot;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionOn;
 import static org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot.visionProviderIndex;
-
-import android.annotation.SuppressLint;
-
-import com.qualcomm.robotcore.hardware.Gamepad;
-
-import org.firstinspires.ftc.teamcode.robots.goldenduck.CoreTele;
-import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Arm;
-import org.firstinspires.ftc.teamcode.robots.goldenduck.subsystem.Robot;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.StickyGamepad;
-import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
 public class DriverControls {
     public static double PRECISION_TURN_MULTIPLIER = .8;
@@ -27,6 +25,7 @@ public class DriverControls {
     public static double DEADZONE = 0.1;
 
     public boolean visionProviderFinalized = robot.visionProviderFinalized;
+    boolean droneSet = true;
 
     Gamepad gamepad1, gamepad2;
     private StickyGamepad stickyGamepad1, stickyGamepad2;
@@ -51,6 +50,14 @@ public class DriverControls {
         if(stickyGamepad1.a) {
             CoreTele.initPosition = true;
         }
+
+        if (stickyGamepad1.y)
+            robot.arm.GripOuterToggle();
+        //robot.arm.GripNeither();
+
+        if (stickyGamepad1.x)
+            robot.arm.GripInnerToggle();
+        //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.guide) {
@@ -92,24 +99,29 @@ public class DriverControls {
     public void joystickDrive() {
 
         if(stickyGamepad2.b) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+            //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (gamepad1.left_trigger > .1) {
-            robot.arm.adjustShoulder(gamepad1.left_trigger);
+//            robot.arm.adjustShoulder(-gamepad1.left_trigger);
+            robot.skyhooks.adjustSkyHooks(-gamepad1.left_trigger);
         }
 
         if (gamepad1.right_trigger > .1) {
+//            robot.arm.adjustShoulder(gamepad1.right_trigger);
+            robot.skyhooks.adjustSkyHooks(gamepad1.right_trigger);
 
         }
         if (stickyGamepad1.a) {
             //ask the robot to snap to an ingest config
             //todo make this behavior work for core's robot
             //robot.behave(Robot.Behavior.INGEST);
+            robot.arm.WristPickup();
         }
         if (stickyGamepad1.b) {
             //ask the robot to configure for scoring at backdrop
             //todo make this behavior work for core's robot
             //robot.toggleBackdropPrep();
+            robot.arm.WristBackdrop();
         }
 
         if(fieldOrientedDrive) {
@@ -122,24 +134,37 @@ public class DriverControls {
         if (gamepad1.left_bumper) {
 
         }
-        if (gamepad1.right_bumper) {
+        if (stickyGamepad1.right_bumper) {
+            //cycle between Arm presets: Intake, Travel, Backdrop
+            robot.arm.armToggle();
 
         }
 
         if (stickyGamepad1.y)
             robot.arm.GripOuterToggle();
+            //robot.arm.GripNeither();
 
         if (stickyGamepad1.x)
             robot.arm.GripInnerToggle();
+            //robot.arm.GripBoth();
 
 
         if(stickyGamepad1.dpad_up)
-
+            if(droneSet)
+            {
+                robot.arm.droneLaunch();
+                droneSet=false;
+            }
+        else {
+            robot.arm.droneSet();
+            droneSet=true;
+            }
 
         if(stickyGamepad2.y) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+            //fieldOrientedDrive = !fieldOrientedDrive;
         }
         if (stickyGamepad1.dpad_down) {
+            robot.arm.setDroneShoulderTargetPosition();//drone launch angle
         }
 
         if(stickyGamepad2.dpad_up) {
@@ -155,14 +180,23 @@ public class DriverControls {
     public void fieldOrientedDrive() {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
+        {
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        //stop if no input
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
-        robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        if (Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs(gamepad1.right_stick_x) > DEADZONE) {
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+
+        }
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
 

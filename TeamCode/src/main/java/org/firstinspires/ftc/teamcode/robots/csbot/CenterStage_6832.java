@@ -1,19 +1,16 @@
 package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
-import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.ExponentialSmoother;
-import org.firstinspires.ftc.teamcode.robots.csbot.util.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.TelemetryProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
 
@@ -32,7 +29,7 @@ public class CenterStage_6832 extends OpMode {
     public static Robot robot;
     static Autonomous auton;
     private FtcDashboard dashboard;
-    public Field field;
+    public static Field field;
     DriverControls dc;
 
 
@@ -157,12 +154,12 @@ public class CenterStage_6832 extends OpMode {
         dc.init_loop();
         dc.robotOrientedDrive();
 
-        robot.updateVision();
+        robot.enableVision();
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
 
-
+        auton.saveRandomizer(robot.visionProviderBack.getMostFrequentPosition().getIndex());
         robot.initPosition();
 
         robot.driveTrain.updatePoseEstimate();
@@ -210,13 +207,13 @@ public class CenterStage_6832 extends OpMode {
 
         if(gameState.equals(GameState.AUTONOMOUS)){
             robot.driveTrain.imu.resetYaw();
-            auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
-            auton.pickAutonToRun(alliance);
+            auton.pickAutonToRun(startingPosition);
         }
 
         if(gameState.equals(GameState.TELE_OP)){
-
+            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
+            robot.articulate(Robot.Articulation.TRAVEL);
         }
 
         if(gameState.equals(GameState.TEST) ||  gameState.equals(GameState.DEMO)){
@@ -246,6 +243,8 @@ public class CenterStage_6832 extends OpMode {
 
             }
 
+            update();
+
             switch(gameState) {
                 case AUTONOMOUS:
                     if(auton.execute(dashboard )) gameState = GameState.TELE_OP;
@@ -254,7 +253,6 @@ public class CenterStage_6832 extends OpMode {
 
                 case TELE_OP:
                     dc.joystickDrive();
-                    //implement teleop
                     break;
 
                 case TEST:
@@ -267,6 +265,7 @@ public class CenterStage_6832 extends OpMode {
 
                 case MANUAL_DIAGNOSTIC:
                     dc.manualDiagnosticMethods();
+                    robot.enableVision();
                     break;
 
                 case SQUARE:
@@ -280,7 +279,6 @@ public class CenterStage_6832 extends OpMode {
         else {
             dc.handlePregameControls();
         }
-        update();
     }
     //end loop()
 
@@ -332,6 +330,9 @@ public class CenterStage_6832 extends OpMode {
             case AUTONOMOUS:
                 handleTelemetry(auton.getTelemetry(debugTelemetryEnabled),  auton.getTelemetryName(), packet);
                 break;
+            case MANUAL_DIAGNOSTIC:
+//                handleTelemetry(robot.visionProviderBack.getTelemetry(true), robot.visionProviderBack.getTelemetryName(), packet);
+                break;
         }
 
         //handle this class' telemetry
@@ -357,7 +358,6 @@ public class CenterStage_6832 extends OpMode {
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
         packet.put("imu angle", robot.driveTrain.imuAngle);
         packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
-        packet.put("action end pose", Math.toDegrees(auton.actionEndPose.heading.toDouble()));
 
 
         dashboard.sendTelemetryPacket(packet);
@@ -369,6 +369,7 @@ public class CenterStage_6832 extends OpMode {
 
     //HELPER METHODS
     private void updateLiveStates() {
+        loopClockTime = System.nanoTime();
         long loopTime = loopClockTime - lastLoopClockTime;
         averageLoopTime = loopTimeSmoother.update(loopTime);
         averageVoltage = voltageSmoother.update(robot.getVoltage());

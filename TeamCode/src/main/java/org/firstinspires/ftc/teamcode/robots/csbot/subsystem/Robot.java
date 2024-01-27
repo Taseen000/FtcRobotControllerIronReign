@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.robots.csbot.subsystem;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
-import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.DriverControls.fieldOrientedDrive;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 
@@ -22,6 +22,8 @@ import org.firstinspires.ftc.teamcode.robots.csbot.util.PositionCache;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.Target;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProvider;
 import org.firstinspires.ftc.teamcode.robots.csbot.vision.VisionProviders;
+import org.firstinspires.ftc.teamcode.robots.csbot.vision.provider.AprilTagProvider;
+import org.openftc.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -53,11 +55,13 @@ public class  Robot implements Subsystem {
     public boolean visionProviderFinalized = false;
     public static int visionProviderIndex = 2;
 
+    public static final double DISTANCE_FROM_CAMERA_TO_CENTER = 7.5; // In inches
+
     private long[] subsystemUpdateTimes;
     private final List<LynxModule> hubs;
     public HardwareMap hardwareMap;
     private VoltageSensor batteryVoltageSensor;
-    private Articulation articulation;
+    public Articulation articulation;
     public List<Target> targets = new ArrayList<Target>();
     public boolean fetched;
     public boolean selfDriving = true;
@@ -87,7 +91,6 @@ public class  Robot implements Subsystem {
         if (gameState.isAutonomous()) {
             intake.setAngle(1600);
         }
-        articulation = Articulation.MANUAL;
     }
     //end start
 
@@ -116,6 +119,7 @@ public class  Robot implements Subsystem {
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         articulation = Robot.Articulation.MANUAL;
+         visionProviderIndex = 2;
 
 //        field = new Field(true);
     }
@@ -151,7 +155,7 @@ public class  Robot implements Subsystem {
     }
     //end update
 
-    public void updateVision() {
+    public void enableVision() {
         if (visionOn) {
             if (!visionProviderFinalized) {
                 createVisionProvider();
@@ -161,6 +165,29 @@ public class  Robot implements Subsystem {
             }
             visionProviderBack.update();
         }
+    }
+
+    public void aprilTagRelocalization(int target) {
+        ArrayList<AprilTagDetection> detections = getAprilTagDetections();
+        if(detections != null && detections.size() > 0) {
+            AprilTagDetection targetTag = detections.get(0);
+            for (AprilTagDetection detection : detections) {
+                if(Math.abs(detection.id-target) < Math.abs(targetTag.id-target))
+                    targetTag = detection;
+            }
+            double x = field.getAprilTagPose(targetTag.id).position.x-targetTag.pose.y- DISTANCE_FROM_CAMERA_TO_CENTER;
+            double y = field.getAprilTagPose(targetTag.id).position.y-targetTag.pose.x;
+            driveTrain.setPose(new Pose2d(new Vector2d(x, y), driveTrain.pose.heading));
+        }
+    }
+
+    public ArrayList<AprilTagDetection> getAprilTagDetections() {
+        if (visionOn) {
+            if (!visionProviderFinalized) {
+                return ((AprilTagProvider)visionProviderBack).getDetections();
+            }
+        }
+        return null;
     }
 
     private static void drawRobot(Canvas c, Pose2d t) {
@@ -217,7 +244,7 @@ public class  Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                intake.setAngle(Intake.ANGLE_MIN);
+                intake.setAngle(Intake.ANGLE_GROUND);
 //                if(isPast(initPositionTimer)) {
 //                    initPositionTimer = futureTime(1);
 //                    initPositionIndex ++;
@@ -258,6 +285,8 @@ public class  Robot implements Subsystem {
             case MANUAL:
                 break;
             case TRAVEL:
+//                robot.outtake.articulate(Outtake.Articulation.TRAVEL);
+                cleanArticulations();
                 break;
             case BACKDROP:
                 break;
@@ -280,6 +309,7 @@ public class  Robot implements Subsystem {
                 break;
             case LAUNCH_DRONE:
                 skyhook.articulate(Skyhook.Articulation.LAUNCH);
+                articulation = Articulation.MANUAL;
                 break;
             case TRAVEL_FROM_INGEST:
                 intake.articulate(Intake.Articulation.TRAVEL);
@@ -293,6 +323,7 @@ public class  Robot implements Subsystem {
                 articulation = Articulation.TRAVEL;
                 break;
             case BACKDROP_PREP:
+                intake.articulate(Intake.Articulation.TRAVEL);
                 outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
                 articulation = Articulation.BACKDROP;
                 break;
@@ -318,6 +349,16 @@ public class  Robot implements Subsystem {
         }
     }
     //end stop
+
+    public void cleanArticulations() {
+        if(articulation == Articulation.TRAVEL) {
+            ingestStage = 0;
+            if(intake.articulation == Intake.Articulation.TRAVEL)
+                intake.cleanArticulations();
+            if(outtake.articulation == Outtake.Articulation.TRAVEL)
+                outtake.cleanArticulations();
+        }
+    }
 
 
     public static int ingestStage = 0;
@@ -346,6 +387,18 @@ public class  Robot implements Subsystem {
         return false;
     }
 
+    public void enterTravel() {
+        if(articulation.equals(Articulation.BACKDROP)) {
+            articulation = Articulation.TRAVEL_FROM_BACKDROP;
+        }
+        if(articulation.equals(Articulation.INGEST)) {
+            articulation = Articulation.TRAVEL_FROM_INGEST;
+        }
+        else{
+            articulation = Articulation.TRAVEL;
+        }
+    }
+
     @Override
     public Map<String, Object> getTelemetry(boolean debug) {
         Map<String, Object> telemetryMap = new LinkedHashMap<>();
@@ -353,6 +406,7 @@ public class  Robot implements Subsystem {
         telemetryMap.put("fieldOrientedDrive?", fieldOrientedDrive);
         telemetryMap.put("wingIntakeIndex", ingestStage);
         telemetryMap.put("initPositionIndex", initPositionIndex);
+        telemetryMap.put("Vision On/Vision Provider Finalized", visionOn+" "+visionProviderFinalized);
 //        telemetryMap.put("MemoryPose", positionCache.readPose());
         for (int i = 0; i < subsystems.length; i++) {
             String name = subsystems[i].getClass().getSimpleName();

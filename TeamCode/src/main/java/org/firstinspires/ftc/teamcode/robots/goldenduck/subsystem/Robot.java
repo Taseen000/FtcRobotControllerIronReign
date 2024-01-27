@@ -37,6 +37,7 @@ public class Robot implements Subsystem {
     public VisionProvider visionProviderBack = null;
     public static boolean visionOn = true;
     public Arm arm;
+    public Skyhook skyhooks;
     //TODO - create a field
 //    public Field field;
 
@@ -98,10 +99,9 @@ public class Robot implements Subsystem {
         // initializing subsystems
         driveTrain = new DriveTrain(hardwareMap, this, simulated);
         arm = new Arm(hardwareMap, this);
+        skyhooks = new Skyhook(hardwareMap,this);
 
-
-
-        subsystems = new Subsystem[]{driveTrain, arm};
+        subsystems = new Subsystem[]{driveTrain, arm, skyhooks};
         subsystemUpdateTimes = new long[subsystems.length];
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -236,7 +236,8 @@ public class Robot implements Subsystem {
             case BACKDROP:
                 break;
             case CALIBRATE:
-                //TODO - WRITE A CALIBRATION ROUTINE
+                arm.behave(Arm.Behavior.CALIBRATE);
+                curBehavior=Robot.Behavior.MANUAL;
                 break;
             case INGEST:
                 if (Ingest()) {
@@ -255,7 +256,7 @@ public class Robot implements Subsystem {
                 break;
             case TRAVEL_FROM_INGEST:
                 //get arm into a position to safely travel through rigging
-                if (!(arm.behavior == Arm.Behavior.TRAVEL)) {
+                if (!(arm.getBehavior() == Arm.Behavior.TRAVEL)) {
                     arm.behave(Arm.Behavior.TRAVEL_FROM_INGEST);
                 }
                 break;
@@ -304,7 +305,7 @@ public class Robot implements Subsystem {
                 arm.behave(Arm.Behavior.INGEST_FROM_TRAVEL);
                 ingestStage++;
             case 1: //wait for outake to dock before proceeding
-                if (arm.behavior == Arm.Behavior.MANUAL) {
+                if (arm.getBehavior() == Arm.Behavior.MANUAL) {
                     //intake can start eating
 
                 }

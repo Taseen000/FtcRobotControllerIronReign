@@ -145,7 +145,7 @@ public class CoreTele extends OpMode {
         } else {
 
         }
-
+        robot.behave(Robot.Behavior.CALIBRATE);
     }
     //end init()
 
@@ -158,8 +158,6 @@ public class CoreTele extends OpMode {
 
         robot.visionProviderBack.setRedAlliance(startingPosition.getMod());
 
-
-        robot.initPosition();
         if(gameState.isAutonomous()) {
             auton.updateIndexOffsets();
             //calc auton based on alliance, starting position and team prop position
@@ -327,7 +325,12 @@ public class CoreTele extends OpMode {
         );
 
         handleTelemetry(visionTelemetryMap, robot.visionProviderBack.getTelemetryName(), packet);
+
         packet.put("imu/roadrunner error", robot.driveTrain.imuRoadrunnerError);
+        packet.put("imu angle", robot.driveTrain.imuAngle);
+        packet.put("roadrunner angle", Math.toDegrees(robot.driveTrain.pose.heading.toDouble()));
+        packet.put("imu PID error", robot.driveTrain.PIDError);
+        packet.put("imu PID Correction", robot.driveTrain.PIDCorrection);
 
         dashboard.sendTelemetryPacket(packet);
         telemetry.update();
@@ -338,6 +341,7 @@ public class CoreTele extends OpMode {
 
     //HELPER METHODS
     private void updateLiveStates() {
+        loopClockTime = System.nanoTime();
         long loopTime = loopClockTime - lastLoopClockTime;
         averageLoopTime = loopTimeSmoother.update(loopTime);
         averageVoltage = voltageSmoother.update(robot.getVoltage());

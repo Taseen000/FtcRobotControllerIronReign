@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.active;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.debugTelemetryEnabled;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.gameState;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.startingPosition;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.visionOn;
@@ -10,6 +12,7 @@ import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot.vision
 
 import android.annotation.SuppressLint;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
@@ -33,6 +36,7 @@ public class DriverControls {
     private StickyGamepad stickyGamepad1, stickyGamepad2;
 
     DriverControls(Gamepad pad1, Gamepad pad2) {
+        fieldOrientedDrive = true;
         gamepad1 = pad1;
         gamepad2 = pad2;
         stickyGamepad1 = new StickyGamepad(gamepad1);
@@ -53,6 +57,11 @@ public class DriverControls {
             CenterStage_6832.initPosition = true;
         }
 
+        if(stickyGamepad1.y) {
+            if(gameState.isAutonomous()) {
+                robot.driveTrain.setPose(startingPosition);
+            }
+        }
 
         if(stickyGamepad1.guide) {
             robot.initPositionIndex ++;
@@ -92,9 +101,8 @@ public class DriverControls {
 
     public void joystickDrive() {
 
-        if(stickyGamepad2.b) {
-            fieldOrientedDrive = !fieldOrientedDrive;
-        }
+        //GAMEPAD 1 CONTROLS
+        // ------------------------------------------------------------------
         if (gamepad1.left_trigger > .1) {
             robot.outtake.adjustFlipper(-robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
@@ -102,15 +110,12 @@ public class DriverControls {
             robot.outtake.adjustFlipper(robot.outtake.FLIPPER_ADJUST_ANGLE);
         }
         if (stickyGamepad1.a) {
-            robot.articulate(Robot.Articulation.INGEST);
+            if(robot.articulation == Robot.Articulation.TRAVEL)
+                robot.articulate(Robot.Articulation.INGEST);
         }
         if (stickyGamepad1.b) {
-            //robot.intake.toggleBeaterDirection();
             robot.toggleBackdropPrep();
         }
-//        if (stickyGamepad1.y){ //todo move off of y since that's pixel flipper also
-//            robot.articulate(Robot.Articulation.INGEST);
-//        }
 
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
@@ -124,39 +129,62 @@ public class DriverControls {
                 robot.intake.pixelSensorLeft();
             else
                 robot.outtake.moveSlide(5);
-//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
-//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
         }
         if (gamepad1.right_bumper) {
             if (robot.intake.isEating())
                 robot.intake.pixelSensorRight();
             else
                 robot.outtake.moveSlide(-5);
-//            if(robot.outtake.getSlidePosition() > 100 && robot.outtake.getSlidePosition() < 800)//TODO find more accurate values for where flipper should be raised
-//                robot.outtake.setTargetAngle(Outtake.FLIPPER_START_ANGLE);
+        }
+        
+        if(stickyGamepad1.y) {
+            if(robot.skyhook.articulation.equals(Skyhook.Articulation.PREP_FOR_HANG)) {
+                robot.articulate(Robot.Articulation.HANG);
+            }
+            else{
+
+                if(field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
+                    if(robot.intake.getIngestPixelHeight() != 4)
+                        robot.intake.setIngestPixelHeight(4);
+                    else if(robot.intake.getIngestPixelHeight() == 4)
+                        robot.intake.setIngestPixelHeight(0);
+                }
+                else {
+                    robot.articulate(Robot.Articulation.PREP_FOR_HANG);
+                }
+            }
         }
 
-        if (stickyGamepad1.y) {
-            robot.intake.setIngestPixelHeight(4);
-        }
-        if (stickyGamepad1.x) {
+        if (stickyGamepad1.x && field.getZone(robot.driveTrain.pose) != null && field.getZone(robot.driveTrain.pose).name.equals("AUDIENCE")) {
             robot.intake.setIngestPixelHeight(robot.intake.getIngestPixelHeight()-1);
         }
-
-        if(stickyGamepad1.dpad_up)
-            robot.intake.articulate(Intake.Articulation.SWALLOW);
-
-
-        if(stickyGamepad2.y) {
-            fieldOrientedDrive = !fieldOrientedDrive;
+        else if(stickyGamepad1.x) {
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
         }
+
+        if(stickyGamepad1.dpad_up) {
+            robot.intake.articulate(Intake.Articulation.SWALLOW);
+        }
+
         if (stickyGamepad1.dpad_down) {
-            robot.outtake.articulate(Outtake.Articulation.BACKDROP_PREP);
+            robot.outtake.setTargetAngle(Outtake.FLIPPER_TRAVEL_ANGLE);
+        }
+        // ------------------------------------------------------------------
+
+        //GAMEPAD 2 CONTROLS
+        // ------------------------------------------------------------------
+        if(stickyGamepad2.guide) {
+            robot.driveTrain.pose = new Pose2d(robot.driveTrain.pose.position, robot.driveTrain.imuAngle);
+        }
+
+        if(stickyGamepad2.b) {
+            fieldOrientedDrive  = !fieldOrientedDrive;
         }
 
         if(stickyGamepad2.dpad_up) {
             robot.articulate(Robot.Articulation.PREP_FOR_HANG);
         }
+
         if(stickyGamepad2.a) {
             robot.skyhook.articulate(Skyhook.Articulation.INIT);
         }
@@ -164,9 +192,11 @@ public class DriverControls {
         if(stickyGamepad2.dpad_down) {
             robot.articulate(Robot.Articulation.HANG);
         }
-//        if(stickyGamepad2.dpad_up) {
-//            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
-//        }
+
+        if(stickyGamepad2.x) {
+            robot.articulate(Robot.Articulation.LAUNCH_DRONE);
+        }
+        // ------------------------------------------------------------------
 
         //mu name is jimmy and i am a pickle and i am a potato and i need to sleep with my truffle oil to feel happiness
 
@@ -175,14 +205,22 @@ public class DriverControls {
     public void fieldOrientedDrive() {
         if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
                 Math.abs(gamepad1.left_stick_y) > DEADZONE ||
-                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE)
+        {
+            robot.driveTrain.setHumanIsDriving(true);
             robot.driveTrain.fieldOrientedDrive(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, alliance.getMod());
         }
-        else robot.driveTrain.drive(0, 0, 0);
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
     public void robotOrientedDrive() {
-        robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        if(Math.abs(gamepad1.left_stick_x) > DEADZONE ||
+                Math.abs(gamepad1.left_stick_y) > DEADZONE ||
+                Math.abs(gamepad1.right_stick_x ) > DEADZONE) {
+            robot.driveTrain.setHumanIsDriving(true);
+            robot.driveTrain.drive(gamepad1.left_stick_x, gamepad1.left_stick_y, -gamepad1.right_stick_x);
+        }
+        else if (robot.driveTrain.isHumanIsDriving()) robot.driveTrain.drive(0, 0, 0);
     }
 
 
@@ -207,7 +245,7 @@ public class DriverControls {
     @SuppressLint("SuspiciousIndentation")
     void handlePregameControls() {
         if (stickyGamepad1.x || stickyGamepad2.x) {
-
+            visionProviderFinalized = false;
             alliance = Constants.Alliance.BLUE;
 
             startingPosition = startingPosition.getMod() == false ?
@@ -221,6 +259,7 @@ public class DriverControls {
         }
         if (stickyGamepad1.b || stickyGamepad2.b) {
             alliance = Constants.Alliance.RED;
+            visionProviderFinalized = false;
             startingPosition = startingPosition.getMod() == true ?
                     startingPosition :
                     startingPosition == Constants.Position.START_LEFT_BLUE ?
