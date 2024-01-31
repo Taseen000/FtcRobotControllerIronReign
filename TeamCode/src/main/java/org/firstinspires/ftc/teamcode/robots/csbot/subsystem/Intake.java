@@ -23,7 +23,7 @@ public class Intake implements Subsystem {
     public static int LEFT_DIVERTER_OPEN = 1850;
     public static int LEFT_DIVERTER_CLOSED = 1340;
     public static int RIGHT_DIVERTER_CLOSED = 1500;
-    public static int ANGLE_GROUND = 1365; //where the intake hits the ground
+    public static int ANGLE_GROUND = 1315; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
     public static int ANGLE_MIN = ANGLE_GROUND - ANGLE_INGEST_INCREMENT;
     public static int ANGLE_MAX = ANGLE_GROUND + 835;
@@ -32,10 +32,10 @@ public class Intake implements Subsystem {
 
     public static int ANGLE_EJECT = ANGLE_GROUND + 100;
     public static int ANGLE_HANG = ANGLE_GROUND + 200; //1515+ INTAKE_OFFSET;
-    public static int ANGLE_SWALLOW = ANGLE_GROUND + 445;//1810 + INTAKE_OFFSET;
-    public static int ANGLE_TRAVEL = ANGLE_GROUND + 385;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
+    public static int ANGLE_SWALLOW = ANGLE_GROUND + 525;//1810 + INTAKE_OFFSET;
+    public static int ANGLE_TRAVEL = ANGLE_GROUND + 335;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
-    public static double TIME_EJECT = 2;
+    public static double TIME_EJECT = .5;
 
     //CONSTANTS
     HardwareMap hardwareMap;
@@ -70,10 +70,10 @@ public class Intake implements Subsystem {
 
     public enum PixelStack {
         GROUND(0, ANGLE_INGEST_GROUND - ANGLE_INGEST_INCREMENT), //the minus is to force it harder into the tiles
-        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT),
-        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*2),
-        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*3),
-        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT*4);
+        TWO(1, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT - 15),
+        THREE(2, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 2 - 15),
+        FOUR(3, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 3 - 15),
+        FIVE(4, ANGLE_INGEST_GROUND + ANGLE_INGEST_INCREMENT * 4 - 15);
 
         private final int value;
         private final int angle;
