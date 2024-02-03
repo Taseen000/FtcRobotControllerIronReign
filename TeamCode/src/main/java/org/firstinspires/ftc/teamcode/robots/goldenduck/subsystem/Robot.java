@@ -209,7 +209,7 @@ public class Robot implements Subsystem {
                 initPositionIndex++;
                 break;
             case 1:
-                    initPositionIndex ++;
+                initPositionIndex ++;
                 break;
             case 2:
 
