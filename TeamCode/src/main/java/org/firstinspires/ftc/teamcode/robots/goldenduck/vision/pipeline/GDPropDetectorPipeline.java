@@ -28,7 +28,7 @@ import java.util.List;
  * @author Iron Reign Coding Team
  */
 
-@Config(value = "GD_PropDetectorPipeline")
+@Config(value = "GD_VISIONE")
 public class GDPropDetectorPipeline extends TimestampedOpenCvPipeline {
     private Mat cropOutput = new Mat();
     private Mat normalizeInput = new Mat();
@@ -66,6 +66,9 @@ public class GDPropDetectorPipeline extends TimestampedOpenCvPipeline {
     public static double BLUE_ALLIANCE_HUE_MIN = 110, BLUE_ALLIANCE_HUE_MAX = 125;
     public static double BLUE_ALLIANCE_SATURATION_MIN = 100, BLUE_ALLIANCE_SATURATION_MAX = 255;
     public static double BLUE_ALLIANCE_VALUE_MIN = 190, BLUE_ALLIANCE_VALUE_MAX = 255;
+    public static double YELLOW_HUE_MIN = 110, YELLOW_HUE_MAX = 125;
+    public static double YELLOW_SATURATION_MIN = 100, YELLOW_SATURATION_MAX = 255;
+    public static double YELLOW_VALUE_MIN = 190, YELLOW_VALUE_MAX = 255;
     public static double MIN_CONTOUR_AREA = 50;
     public static String BLUR = "Box Blur";
 
@@ -118,9 +121,12 @@ public class GDPropDetectorPipeline extends TimestampedOpenCvPipeline {
         double[] hsvThresholdSaturation;
         double[] hsvThresholdValue;
         if(isRedAlliance) {
-            hsvThresholdHue = new double[]{RED_ALLIANCE_HUE_MIN, RED_ALLIANCE_HUE_MAX};
-            hsvThresholdSaturation = new double[]{RED_ALLIANCE_SATURATION_MIN, RED_ALLIANCE_SATURATION_MAX};
-            hsvThresholdValue = new double[]{RED_ALLIANCE_VALUE_MIN, RED_ALLIANCE_VALUE_MAX};
+//            hsvThresholdHue = new double[]{RED_ALLIANCE_HUE_MIN, RED_ALLIANCE_HUE_MAX};
+//            hsvThresholdSaturation = new double[]{RED_ALLIANCE_SATURATION_MIN, RED_ALLIANCE_SATURATION_MAX};
+//            hsvThresholdValue = new double[]{RED_ALLIANCE_VALUE_MIN, RED_ALLIANCE_VALUE_MAX};
+            hsvThresholdHue = new double[]{YELLOW_HUE_MIN, YELLOW_HUE_MAX};
+            hsvThresholdSaturation = new double[]{YELLOW_SATURATION_MIN, YELLOW_SATURATION_MAX};
+            hsvThresholdValue = new double[]{YELLOW_VALUE_MIN, YELLOW_VALUE_MAX};
         }
         else {
             hsvThresholdHue = new double[]{BLUE_ALLIANCE_HUE_MIN, BLUE_ALLIANCE_HUE_MAX};

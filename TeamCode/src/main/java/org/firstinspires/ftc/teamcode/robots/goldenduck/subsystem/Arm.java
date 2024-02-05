@@ -107,7 +107,7 @@ public class Arm implements Subsystem {
     public static double WRIST_R_BACKDROP = 1100;
     public static double WRIST_L_BACKDROP = 1300;
 
-    public static int DRONE_SET = 1556;
+    public static int DRONE_SET = 1576;
     public static int DRONE_LAUNCH = 900;
     public static int DRONE_SHOULDER = 1200;
 
