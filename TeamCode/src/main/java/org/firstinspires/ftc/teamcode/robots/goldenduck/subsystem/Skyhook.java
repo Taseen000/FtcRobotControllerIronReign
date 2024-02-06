@@ -48,7 +48,7 @@ public class Skyhook implements Subsystem {
         skyHookRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         skyHookRight.setTargetPosition(0);
         skyHookRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        skyHookRight.setPower(0.9);
+        skyHookRight.setPower(1);
 
         skyHookLeft = this.hardwareMap.get(DcMotorEx.class, "motorSkyHookLeft");
         skyHookLeft.setMotorEnable();
