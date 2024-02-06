@@ -59,7 +59,7 @@ public class Arm implements Subsystem {
     public static int GripInnerOpen = 1234;
     public static int GripInnerClosed = 900;
     public static int GripOuterOpen = 900;
-    public static int GripOuterClosed = 1400;
+    public static int GripOuterClosed = 2105;
     public enum GripperState{
         BothOpen,
         BothClosed,
@@ -106,6 +106,13 @@ public class Arm implements Subsystem {
     public static double WRIST_L_TUCK = 900;
     public static double WRIST_R_BACKDROP = 1100;
     public static double WRIST_L_BACKDROP = 1300;
+    public static double WRIST_L_COUNTERCLOCK = 1300;
+    public static double WRIST_R_COUNTERCLOCK = 1300;
+    public static double WRIST_L_CLOCKWISE = 1370;
+    public static double WRIST_R_CLOCKWISE = 1300;
+    public static double WRIST_L_NEUTRALIZE = 1300;
+    public static double WRIST_R_NEUTRALIZE = 1300;
+
 
     public static int DRONE_SET = 1576;
     public static int DRONE_LAUNCH = 900;
@@ -354,7 +361,18 @@ public class Arm implements Subsystem {
         wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_BACKDROP));
         wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_BACKDROP));
     }
-
+    public void WristRollClockWise(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_CLOCKWISE));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_CLOCKWISE));
+    }
+    public void WristRollCounterClock(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_COUNTERCLOCK));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_COUNTERCLOCK));
+    }
+    public void WristRollNeutral(){
+        wristServoLeft.setPosition(servoNormalizeExtended(WRIST_L_NEUTRALIZE));
+        wristServoRight.setPosition(servoNormalizeExtended(WRIST_R_NEUTRALIZE));
+    }
     public void GripInnerToggle(){ //to open inner, outer has to open as well
         if (gripperState==GripperState.BothClosed || gripperState == GripperState.OuterOpen)
             gripperState = GripperState.BothOpen;

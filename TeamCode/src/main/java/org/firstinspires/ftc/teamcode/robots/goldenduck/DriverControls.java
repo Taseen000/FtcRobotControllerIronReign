@@ -123,7 +123,15 @@ public class DriverControls {
             //robot.toggleBackdropPrep();
             robot.arm.WristBackdrop();
         }
-
+        if(stickyGamepad2.dpad_right) {
+            robot.arm.WristRollClockWise();
+        }
+        if(stickyGamepad2.dpad_left) {
+            robot.arm.WristRollCounterClock();
+        }
+        if(stickyGamepad2.dpad_down) {
+            robot.arm.WristRollNeutral();
+        }
         if(fieldOrientedDrive) {
             fieldOrientedDrive();
         }
