@@ -106,12 +106,12 @@ public class Arm implements Subsystem {
     public static double WRIST_L_TUCK = 900;
     public static double WRIST_R_BACKDROP = 1100;
     public static double WRIST_L_BACKDROP = 1300;
-    public static double WRIST_L_COUNTERCLOCK = 1300;
-    public static double WRIST_R_COUNTERCLOCK = 1300;
-    public static double WRIST_L_CLOCKWISE = 1370;
-    public static double WRIST_R_CLOCKWISE = 1300;
-    public static double WRIST_L_NEUTRALIZE = 1300;
-    public static double WRIST_R_NEUTRALIZE = 1300;
+    public static double WRIST_L_COUNTERCLOCK = 1700;
+    public static double WRIST_R_COUNTERCLOCK = 1200;
+    public static double WRIST_L_CLOCKWISE = 1200;
+    public static double WRIST_R_CLOCKWISE = 1700;
+    public static double WRIST_L_NEUTRALIZE = 1400;
+    public static double WRIST_R_NEUTRALIZE = 1400;
 
 
     public static int DRONE_SET = 1576;
