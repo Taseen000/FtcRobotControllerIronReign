@@ -46,6 +46,14 @@ public class Arm implements Subsystem {
         this.shoulderTargetPosition = shoulderTargetPosition;
     }
 
+    public HardwareMap getHardwareMap() {
+        return hardwareMap;
+    }
+
+    public void setHardwareMap(HardwareMap hardwareMap) {
+        this.hardwareMap = hardwareMap;
+    }
+
     int shoulderTargetPosition = 0;
 
     public static int shoulderTargetPositionTest = 0;
@@ -117,6 +125,8 @@ public class Arm implements Subsystem {
     public static int DRONE_SET = 1576;
     public static int DRONE_LAUNCH = 900;
     public static int DRONE_SHOULDER = 1200;
+
+    public static int PURPLE_DROP = 1000;
 
     private Behavior prevBehavior;
 
