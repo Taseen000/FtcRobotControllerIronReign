@@ -239,7 +239,7 @@ public class DriverControls {
 
     @SuppressLint("SuspiciousIndentation")
     void handlePregameControls() {
-        if (stickyGamepad1.x || stickyGamepad2.x) {
+        if (stickyGamepad1.dpad_down || stickyGamepad1.x) {
 
             alliance = Constants.Alliance.BLUE;
 
@@ -252,7 +252,7 @@ public class DriverControls {
 
 
         }
-        if (stickyGamepad1.b || stickyGamepad2.b) {
+        if (stickyGamepad1.dpad_up || stickyGamepad1.b) {
             alliance = Constants.Alliance.RED;
             startingPosition = startingPosition.getMod() == true ?
                     startingPosition :
@@ -264,13 +264,13 @@ public class DriverControls {
         }
 
 
-        if (stickyGamepad1.dpad_left || stickyGamepad2.dpad_left)
+        if (stickyGamepad1.dpad_left || stickyGamepad1.x)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_LEFT_RED : Constants.Position.START_LEFT_BLUE;
 
-        if (stickyGamepad1.dpad_right || stickyGamepad2.dpad_right)
+        if (stickyGamepad1.dpad_right || stickyGamepad1.b)
             startingPosition = alliance == Constants.Alliance.RED ? Constants.Position.START_RIGHT_RED : Constants.Position.START_RIGHT_BLUE;
 
-        if (stickyGamepad1.dpad_up || stickyGamepad2.dpad_up)
+        if (stickyGamepad1.a || stickyGamepad1.y)
             debugTelemetryEnabled = !debugTelemetryEnabled;
     }
 
