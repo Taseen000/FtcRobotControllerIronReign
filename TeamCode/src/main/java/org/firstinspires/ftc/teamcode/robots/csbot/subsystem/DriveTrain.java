@@ -16,11 +16,15 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.field;
+import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.robot;
 import static org.firstinspires.ftc.teamcode.robots.csbot.util.Utils.wrapAngle;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
+import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 //todo this should not reference the reign version of MecanumDrive
+import org.firstinspires.ftc.teamcode.R;
 import org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832;
 import org.firstinspires.ftc.teamcode.robots.csbot.Field;
 import org.firstinspires.ftc.teamcode.robots.csbot.SubZone;
@@ -57,6 +61,8 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     public static int turnToTest = 0;
     public static double turnToSpeed=.8; //max angular speed for turn
     public boolean distanceSensorsEnabled = true;
+    private static final double DISTANCE_BETWEEN_DISTANCE_SENSORS = 14;
+
 
     public boolean isHumanIsDriving() {
         return humanIsDriving;
@@ -67,24 +73,6 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
     }
 
     private boolean humanIsDriving=false;
-
-    private Action driveToDrone;
-    public void driveToDroneBuild() {
-        driveToDrone = new SequentialAction(
-                robot.driveTrain.actionBuilder(robot.driveTrain.pose)
-                        .splineTo(new Vector2d(0, CenterStage_6832.startingPosition.getMod()?-33:33), 0)
-                        .build()
-        );
-    }
-    public boolean driveToDrone() {
-        if(driveToDrone == null) {
-            driveToDroneBuild();
-            return false;
-        }
-        if(!driveToDrone.run(new TelemetryPacket()))
-            return false;
-        return true;
-    }
 
     public enum Articulation{
         BACKSTAGE_DRIVE,
@@ -130,6 +118,14 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         if (turnToTest!=0) turnUntilDegreesIMU(turnToTest,turnToSpeed); //can target any angle but zero
 
     }
+
+    public double distanceSensorHeading() {
+        double big = Math.max(leftDistanceSensorValue, rightDistanceSensorValue);
+        double small = Math.max(rightDistanceSensorValue, leftDistanceSensorValue);
+        double diffAngle = Math.toDegrees(Math.atan2(big - small, DISTANCE_BETWEEN_DISTANCE_SENSORS));
+        return -diffAngle;
+    }
+
 
     public void drive(double x, double y, double theta) {
         if(CenterStage_6832.field.finalized) {
@@ -227,8 +223,11 @@ public class DriveTrain extends MecanumDrive implements Subsystem {
         telemetryMap.put("y in fieldCoords", pose.position.y / Constants.FIELD_INCHES_PER_GRID);
         telemetryMap.put("x in inches", pose.position.x);
         telemetryMap.put("y in inches", pose.position.y);
-        telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
-        telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
+        if(distanceSensorsEnabled) {
+            telemetryMap.put("Right Distance Sensor Value", rightDistanceSensorValue);
+            telemetryMap.put("Left Distance Sensor Value", leftDistanceSensorValue);
+            telemetryMap.put("distance sensor heading", distanceSensorHeading());
+        }
         telemetryMap.put("heading", Math.toDegrees(pose.heading.log()));
         telemetryMap.put("Left Odometry Pod:\t", leftFront.getCurrentPosition());
         telemetryMap.put("Right Odometry Pod:\t", rightFront.getCurrentPosition());
