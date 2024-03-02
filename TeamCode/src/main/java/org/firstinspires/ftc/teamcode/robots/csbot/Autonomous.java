@@ -2,8 +2,10 @@ package org.firstinspires.ftc.teamcode.robots.csbot;
 
 import static org.firstinspires.ftc.teamcode.robots.csbot.CenterStage_6832.alliance;
 import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.DriveTrain.turnToSpeed;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_JOINT_SPEED;
-import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.FLIPPER_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_JOINT_SPEED;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELBOW_TRAVEL_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.ELEVATOR_START_ANGLE;
+import static org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake.WRIST_TRAVEL_ANGLE;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.futureTime;
 import static org.firstinspires.ftc.teamcode.util.utilMethods.isPast;
 
@@ -21,6 +23,7 @@ import org.firstinspires.ftc.teamcode.robots.csbot.rr_stuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Outtake;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Robot;
+import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Sensors;
 import org.firstinspires.ftc.teamcode.robots.csbot.subsystem.Skyhook;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.CSPosition;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Constants;
@@ -316,6 +319,12 @@ public class Autonomous implements TelemetryProvider {
         autonIndex = 0;
         if(randomizer == 0)
             randomizer = 2;
+        if(randomizer == 3){
+            randomizer = 1;
+        }
+        if(randomizer == 1){
+            randomizer = 3;
+        }
         if(!driverSide) {
             aprilTagApproachPosition = P2D(1.5,   1.5, STANDARD_HEADING);
             audienceIntermediate = P2D(1,.5,-10);
@@ -514,11 +523,11 @@ public class Autonomous implements TelemetryProvider {
         TelemetryPacket packet = new TelemetryPacket();
         switch (autonIndex) {
                 case 0:
-                    robot.driveTrain.distanceSensorsEnabled = false;
+                    Sensors.distanceSensorsEnabled = false;
                     driveToPurplePixelBuild();
 
                     robot.intake.articulate(Intake.Articulation.INIT);
-                    futureTimer = futureTime(0);//delay for auton start
+                    futureTimer = futureTime(5);//delay for auton start
                     autonIndex++;
                     break;
                 case 1:
@@ -537,14 +546,14 @@ public class Autonomous implements TelemetryProvider {
                 case 2:
                     autonState = AutonState.SCORE_GROUND;
                     if (!sweep.run(packet)) {
-                        robot.outtake.flipper.setSpeed(Outtake.FLIPPER_JOINT_SPEED * .5);
+                        robot.outtake.elbow.setSpeed(Outtake.ELBOW_JOINT_SPEED * .5);
                         robot.intake.articulate(Intake.Articulation.EJECT);
                         autonIndex++;
                     }
                     break;
                 case 3:
                     if (robot.intake.readyForTravel()) {
-                        robot.outtake.setTargetAngle(FLIPPER_TRAVEL_ANGLE);
+                        robot.outtake.setTargetAngle(ELBOW_TRAVEL_ANGLE, WRIST_TRAVEL_ANGLE, ELEVATOR_START_ANGLE);
                         driveToYellowPixelBuild();
                         autonIndex++;
                     }
@@ -559,7 +568,7 @@ public class Autonomous implements TelemetryProvider {
                 case 5:
                     autonState = AutonState.TRAVEL_BACKDROP;
                     if (!driveToYellowPixel.run(packet)) {
-                        robot.outtake.flipper.setSpeed(FLIPPER_JOINT_SPEED);
+                        robot.outtake.elbow.setSpeed(ELBOW_JOINT_SPEED);
                         autonIndex++;
                     }
                     break;
@@ -604,7 +613,7 @@ public class Autonomous implements TelemetryProvider {
                 case 11:
                     autonState = AutonState.SCORE_DRIVE;
                     if(robot.outtake.articulation.equals(Outtake.Articulation.TRAVEL)) {
-                        robot.driveTrain.distanceSensorsEnabled = true;
+                        Sensors.distanceSensorsEnabled = true;
                         autonIndex++;
                         futureTimer = futureTime(2);
                     }
@@ -616,7 +625,7 @@ public class Autonomous implements TelemetryProvider {
                         robot.driveTrain.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
                         robot.articulate(Robot.Articulation.TRAVEL);
                         robot.outtake.articulate(Outtake.Articulation.TRAVEL_FROM_BACKDROP);
-                        robot.driveTrain.distanceSensorsEnabled = false;
+                        Sensors.distanceSensorsEnabled = false;
                         driveToPixelStackBuild();
                         MecanumDrive.PARAMS.maxWheelVel = 25;
                         futureTimer = futureTime(1);

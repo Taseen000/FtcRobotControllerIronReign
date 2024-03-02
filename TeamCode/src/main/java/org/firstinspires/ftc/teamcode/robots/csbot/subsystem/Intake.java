@@ -20,38 +20,38 @@ import java.util.Map;
 @Config(value = "AA_CS_INTAKE")
 public class Intake implements Subsystem {
     public static int RIGHT_DIVERTER_OPEN = 1010;
-    public static int LEFT_DIVERTER_OPEN = 1850;
-    public static int LEFT_DIVERTER_CLOSED = 1340;
+    public static int LEFT_DIVERTER_OPEN = 1340;
+    public static int LEFT_DIVERTER_CLOSED = 1850;
     public static int RIGHT_DIVERTER_CLOSED = 1500;
-    public static int ANGLE_GROUND = 1325; //where the intake hits the ground
+    public static int ANGLE_GROUND = 2120; //where the intake hits the ground
     public static int ANGLE_INGEST_INCREMENT = 20;
-    public static int ANGLE_MIN = ANGLE_GROUND - ANGLE_INGEST_INCREMENT;
+    public static int ANGLE_MIN = ANGLE_GROUND + ANGLE_INGEST_INCREMENT;
     public static int ANGLE_MAX = ANGLE_GROUND + 835;
-    public static int ANGLE_START = ANGLE_MAX;
+    public static int ANGLE_START = 1190;
     public static int ANGLE_INGEST_GROUND = ANGLE_GROUND;
 
-    public static int ANGLE_EJECT = ANGLE_GROUND + 100;
-    public static int ANGLE_HANG = ANGLE_GROUND + 200; //1515+ INTAKE_OFFSET;
-    public static int ANGLE_SWALLOW = ANGLE_GROUND + 525;//1810 + INTAKE_OFFSET;
-    public static int ANGLE_TRAVEL = ANGLE_GROUND + 335;//1750+ INTAKE_OFFSET; //safe to travel through backstage door
+    public static int ANGLE_EJECT = 1250;
+    public static int ANGLE_HANG = 1450;
+    public static int ANGLE_SWALLOW = 1600;
+    public static int ANGLE_TRAVEL = 1500; //safe to travel through backstage door
     public static double TIME_SWALLOW = 1;
-    public static double TIME_EJECT = .5;
+    public static double TIME_EJECT = 2;
 
     //CONSTANTS
     HardwareMap hardwareMap;
     Robot robot;
     Servo diverterRight, diverterLeft;
-    Servo angle;
+    Servo angleLeft, angleRight;
     DcMotorEx beater;
     public static boolean precisionAngle = false;
     public boolean manualBeaterEject = false;
     public boolean manualBeaterEnable = false;
     public static double BEATER_INGEST_VELOCITY = 1700;
-    public static double BEATER_EJECT_VELOCITY = -700;
+    public static double BEATER_EJECT_VELOCITY = -800;
 
     private double beaterTargetVelocity = 0;
 
-    private static int angleTarget = ANGLE_GROUND;
+    public static int angleTarget = ANGLE_GROUND;
     private int ingestPixelHeight = 0;  //the height at which to start ingesting pixels. Normally 0 for ground but could be 4 for top pixel in a stack
 
     public int getIngestPixelHeight() {
@@ -169,8 +169,10 @@ public class Intake implements Subsystem {
             diverterRight = hardwareMap.get(Servo.class, "diverterLeft");
             beater = hardwareMap.get(DcMotorEx.class, "intakeBeater");
             beater.setDirection(DcMotorSimple.Direction.REVERSE);
-            angle = hardwareMap.get(Servo.class, "intakeAngle");
-
+            angleLeft = hardwareMap.get(Servo.class, "intakeAngleLeft");
+            angleRight = hardwareMap.get(Servo.class, "intakeAngleRight");
+//            angle.setDirection(Servo.Direction.REVERSE);
+            angleRight.setDirection(Servo.Direction.REVERSE);
             beater.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
@@ -178,7 +180,8 @@ public class Intake implements Subsystem {
     public void update(Canvas fieldOverlay) {
         pixelSensors();
         articulate();
-        angle.setPosition(Utils.servoNormalize(angleTarget));
+        angleLeft.setPosition(Utils.servoNormalize(angleTarget));
+        angleRight.setPosition(Utils.servoNormalize(angleTarget));
         diverters();
         beater.setVelocity(beaterTargetVelocity);
     }
@@ -252,11 +255,13 @@ public class Intake implements Subsystem {
                 break;
             case DOWN:
                 angleTarget = ANGLE_EJECT;
-                angle.setPosition(Utils.servoNormalize(angleTarget));
+                angleLeft.setPosition(Utils.servoNormalize(angleTarget));
+                angleRight.setPosition(Utils.servoNormalize(angleTarget));
                 break;
             case INIT:
                 angleTarget = ANGLE_START;
-                angle.setPosition(Utils.servoNormalize(angleTarget));
+                angleLeft.setPosition(Utils.servoNormalize(angleTarget));
+                angleRight.setPosition(Utils.servoNormalize(angleTarget));
                 articulation = Articulation.MANUAL;
                 break;
         }
@@ -367,7 +372,7 @@ public class Intake implements Subsystem {
         switch (ejectState){
             case 0: //todo timing values in eject() have not been validated
                 setAngle(ANGLE_EJECT);
-                ejectTimer = futureTime(.3); //time for angle to set
+                ejectTimer = futureTime(.5); //time for angle to set
                 ejectState++;
                 break;
             case 1:
@@ -397,7 +402,9 @@ public class Intake implements Subsystem {
         angleTarget += speed * (precisionAngle ? 10 : 100);
 
 
-        angle.setPosition(
+        angleRight.setPosition(Utils.servoNormalize(angleTarget));
+
+        angleLeft.setPosition(
         Utils.servoNormalize(angleTarget));
         return angleTarget;
     }
@@ -422,10 +429,10 @@ public class Intake implements Subsystem {
         telemetryMap.put("ingest pixel height", ingestPixelHeight);
         telemetryMap.put("articulation", articulation.name());
         telemetryMap.put("manual beater bar on?", manualBeaterEnable);
-        telemetryMap.put("beater bar amps", beater.getPower());
+        telemetryMap.put("beater bar amps", Robot.sensors.beaterBarAmps);
         telemetryMap.put("beater bar velocity", beater.getVelocity());
         telemetryMap.put("beater bar target velocity", beaterTargetVelocity);
-        telemetryMap.put("angle controller position", Utils.servoDenormalize(angle.getPosition()));
+        telemetryMap.put("angle controller position left", Utils.servoDenormalize(angleLeft.getPosition()) + " & right" + Utils.servoDenormalize(angleRight.getPosition()));
         telemetryMap.put("diverter state", diverterState.name());
         telemetryMap.put("right diverter ticks", Utils.servoDenormalize(diverterRight.getPosition()));
         telemetryMap.put("left diverter ticks", Utils.servoDenormalize(diverterLeft.getPosition()));

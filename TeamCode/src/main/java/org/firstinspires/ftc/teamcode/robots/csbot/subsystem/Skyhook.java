@@ -8,12 +8,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.DcMotorExResetable;
 import org.firstinspires.ftc.teamcode.robots.csbot.util.Utils;
+import org.firstinspires.ftc.teamcode.util.PIDController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,19 +30,21 @@ public class Skyhook implements Subsystem {
     Robot robot;
     public static int skyhookRightTicks = 0;
     public static int skyhookLeftTicks = 0;
-    public static int SKYHOOK_HANG_TICKS = 300;
+    public static int SKYHOOK_HANG_TICKS = 450;
     public static int SKYHOOK_LAUNCH_TICKS = 340;
     public static int PREP_FOR_HANG_TICKS = 0;
     public int droneServoTicks = 1500;
     public static int DRONE_TENSION_TICKS = 1450;
     public static int DRONE_RELEASE_TICKS = 750;
-    public static int SKYHOOK_SAFE_TICKS = 900;
+    public static int SKYHOOK_SAFE_TICKS = 1200;
     public static int SKYHOOK_UP_TICKS = 0;
+    public PIDController droneLaunchPID;
+    public static PIDCoefficients droneLaunchCoefficients;
     DcMotorEx kareem, jabbar;
     IMU skyhookIMU = null;
     public DcMotorExResetable skyhookLeft, skyhookRight;
     public Servo droneLauncher;
-    public static int SKYHOOK_INIT_TICKS = 500;
+    public static int SKYHOOK_INIT_TICKS = 700;
 
     public static double SKYHOOK_POWER = 1;
 
@@ -128,12 +132,13 @@ public class Skyhook implements Subsystem {
         switch (launchIndex) {
             case 0:
                 launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
+                Sensors.skyhookIMUEnabled = true;
                 launchIndex ++;
                 break;
             case 1:
                 skyhookRightTicks = SKYHOOK_LAUNCH_TICKS;
                 skyhookLeftTicks = SKYHOOK_LAUNCH_TICKS;
-                if(withinError(skyhookIMU.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES), 132, 3)) {
+                if(withinError(Robot.sensors.skyhookIMUPitch, 132, 3)) {
                     skyhookLeftTicks = getSkyhookLeftTicksCurrent();
                     skyhookRightTicks = getSkyhookRightTicksCurrent();
                     launchTimer = futureTime(.7);
@@ -143,6 +148,7 @@ public class Skyhook implements Subsystem {
             case 2:
                 if(isPast(launchTimer)) {
                     releaseTheDrone();
+                    Sensors.skyhookIMUEnabled = false;
                     launchTimer = futureTime(SKYHOOK_LAUNCH_TIMER);
                     launchIndex++;
                 }
@@ -197,8 +203,8 @@ public class Skyhook implements Subsystem {
         telemetryMap.put("droneTicks", droneServoTicks);
         telemetryMap.put("droneStage", launchIndex);
 //        telemetryMap.put("skyhookIMU", skyhookIMU.getRobotYawPitchRollAngles());
-        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
-        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
+//        telemetryMap.put("Skyhook Left Memory Position", robot.positionCache.readPose().getSkyhookLeftTicks());
+//        telemetryMap.put("Skyhook Right Memory Position", robot.positionCache.readPose().getSkyhookRightTicks());
 
         return telemetryMap;
     }
